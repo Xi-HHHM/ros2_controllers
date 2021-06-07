@@ -113,7 +113,6 @@ public:
   // Filter chain for Wrench data
   std::unique_ptr<filters::FilterChain<geometry_msgs::msg::WrenchStamped>> filter_chain_;
 
-
 protected:
   void process_wrench_measurements(
     const geometry_msgs::msg::Wrench & measured_wrench

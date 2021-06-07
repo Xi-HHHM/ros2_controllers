@@ -25,6 +25,7 @@
 
 #include "angles/angles.h"
 #include "controller_interface/helpers.hpp"
+#include "filters/filter_chain.hpp"
 #include "geometry_msgs/msg/wrench.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "trajectory_msgs/msg/joint_trajectory_point.hpp"
@@ -188,6 +189,26 @@ CallbackReturn AdmittanceController::on_configure(
     get_double_param_and_error_if_empty(admittance_->stiffness_[5], "admittance.stiffness.rz")
     )
   {
+    return CallbackReturn::ERROR;
+  }
+
+  try {
+    admittance_->filter_chain_ =
+    std::make_unique<filters::FilterChain<geometry_msgs::msg::WrenchStamped>>(
+      "geometry_msgs::msg::WrenchStamped");
+  } catch (const std::exception & e) {
+    fprintf(
+      stderr, "Exception thrown during filter chain creation at configure stage with message : %s \n",
+      e.what());
+    return CallbackReturn::ERROR;
+  }
+
+  if (!admittance_->filter_chain_->configure("input_wrench_filter_chain",
+    get_node()->get_node_logging_interface(), get_node()->get_node_parameters_interface()))
+  {
+    RCLCPP_ERROR(get_node()->get_logger(),
+                 "Could not configure sensor filter chain, please check if the "
+                 "parameters are provided correctly.");
     return CallbackReturn::ERROR;
   }
 
